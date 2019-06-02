@@ -109,18 +109,22 @@ Page {
             }
         }
         Keys.onUpPressed: {
-            var listItems=messageList.contentItem.children
-            for (var i=0; i<listItems.length; ++i){
-                if (listItems[i].currentMessageType !== undefined) {
-                    if (listItems[i].messageEditable) {
-                        listItems[i].triggerEdit()
-                        // break;   // break here if you want to edit even if someone answered.
-                                    // If the list is scrolling, children change index while looping,
-                                    // and it ends up peaking the wrong child.
-                                    // Is there any porperty that tells whether it is scrolling?
-                    }
-                    break;
+            if (writer.text == "") {
+                var lastSentIndex=messagingModel.findIndexById(messagingModel.lastOutboxId)
+                console.info(lastSentIndex)
+                if (lastSentIndex === -1)
+                    return
+                var previewsIndex = messageList.currentIndex
+                messageList.currentIndex = lastSentIndex + 1
+                messageList.highlightFollowsCurrentItem = false
+                var lastSentItem = messageList.currentItem
+                if (lastSentItem.isEditable){
+                    messageList.positionViewAtIndex(lastSentIndex + 1, ListView.Contain)
+                    lastSentItem.triggerEdit()
                 }
+                else
+                    messageList.currentIndex = previewsIndex
+                messageList.highlightFollowsCurrentItem = true
             }
         }
 
@@ -326,7 +330,7 @@ Page {
                         target: myDelegate
                     }
 
-                    property alias messageEditable: editEntry.visible
+                    property alias isEditable: editEntry.visible
                     signal triggerEdit()
                     onTriggerEdit: editEntry.clicked()
                     menu: ContextMenu {
